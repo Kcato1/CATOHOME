@@ -14,20 +14,36 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: read #This is required for actions/checkout
+    outputs:
+      maven-project: ${{ steps.detect.outputs.maven-project }}
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check for Maven project
+        id: detect
+        shell: pwsh
+        run: |
+          if (Test-Path -Path 'pom.xml' -PathType Leaf) {
+            "maven-project=true" >> $env:GITHUB_OUTPUT
+          } else {
+            "maven-project=false" >> $env:GITHUB_OUTPUT
+            Write-Host "Skipping build: no pom.xml exists at the repository root."
+          }
+
       - name: Set up Java version
+        if: steps.detect.outputs.maven-project == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'microsoft'
 
       - name: Build with Maven
+        if: steps.detect.outputs.maven-project == 'true'
         run: mvn clean install
 
       - name: Upload artifact for deployment job
+        if: steps.detect.outputs.maven-project == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: java-app
@@ -36,6 +52,7 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
+    if: needs.build.outputs.maven-project == 'true'
     
     
     steps:
@@ -53,4 +70,3 @@ jobs:
           package: '*.jar'
 
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2294C70C1BD64F72AAF4A8ED0F6CAEF6 }}
-

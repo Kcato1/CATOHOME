@@ -16,34 +16,36 @@ jobs:
       has-project: ${{ steps.project.outputs.has-project }}
     permissions:
       contents: read #This is required for actions/checkout
+    outputs:
+      has_maven_project: ${{ steps.detect.outputs.has_maven_project }}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Check for Maven project
-        id: project
+        id: detect
         shell: pwsh
         run: |
-          if (Test-Path -Path pom.xml -PathType Leaf) {
-            "has-project=true" >> $env:GITHUB_OUTPUT
+          if (Test-Path -Path 'pom.xml' -PathType Leaf) {
+            "has_maven_project=true" >> $env:GITHUB_OUTPUT
           } else {
-            "has-project=false" >> $env:GITHUB_OUTPUT
-            Write-Host "No root pom.xml found; skipping Java build and deployment."
+            "has_maven_project=false" >> $env:GITHUB_OUTPUT
+            Write-Host "No root pom.xml found; skipping Maven build and deployment."
           }
 
       - name: Set up Java version
-        if: steps.project.outputs.has-project == 'true'
+        if: steps.detect.outputs.has_maven_project == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'microsoft'
 
       - name: Build with Maven
-        if: steps.project.outputs.has-project == 'true'
+        if: steps.detect.outputs.has_maven_project == 'true'
         run: mvn clean install
 
       - name: Upload artifact for deployment job
-        if: steps.project.outputs.has-project == 'true'
+        if: steps.detect.outputs.has_maven_project == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: java-app
@@ -52,7 +54,7 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
-    if: needs.build.outputs.has-project == 'true'
+    if: needs.build.outputs.has_maven_project == 'true'
     
     
     steps:

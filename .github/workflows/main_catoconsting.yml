@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    outputs:
+      has-project: ${{ steps.project.outputs.has-project }}
     permissions:
       contents: read #This is required for actions/checkout
     outputs:

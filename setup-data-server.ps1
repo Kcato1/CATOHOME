@@ -10,6 +10,12 @@
       and compresses CSV/JSON but not Parquet.
     - Keeps the PC from sleeping on AC power unless -AllowSleep is given.
     Safe to re-run: it updates the existing install in place.
+.NOTES
+    Network layout (home network, 192.168.1.x):
+      Kevin-Main  (192.168.1.x)   -+
+      Kevin-Mini  (192.168.1.x)   -+-- Home network -- Internet -- Snowflake
+      Ubuntu VM   (192.168.1.100) ---- Prefect UI on port 4200
+    kevin-Mini (this PC) is the data server; the Ubuntu VM hosts the Prefect UI.
 .PARAMETER Port
     TCP port to serve on (default 8080).
 .PARAMETER InstallDir
